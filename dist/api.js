@@ -96,8 +96,10 @@ class TwitchAPI {
                 if (error.response && error.response.status === 401) {
                     const newToken = await this.refresh();
                     if (newToken) {
+                        this.userToken = newToken.access_token;
+                        this.refreshToken = newToken.refresh_token;
                         if (typeof this.onTokenRefresh === 'function') {
-                            await this.onTokenRefresh(newToken.access_token);
+                            await this.onTokenRefresh(newToken.access_token, newToken.refresh_token);
                         }
                         return this.subscribe(type, session);
                     }

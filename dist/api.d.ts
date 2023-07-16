@@ -8,7 +8,7 @@ declare class TwitchAPI {
     private refreshToken?;
     private onTokenRefresh?;
     constructor(broadcasterId: string, clientId: string, clientSecret: string, applicationToken: string);
-    credentials(userToken: string, refreshToken: string, onTokenRefresh?: (newToken: string) => Promise<void>): void;
+    credentials(userToken: string, refreshToken: string, onTokenRefresh?: (newToken: string, newRefreshToken: string) => Promise<void>): void;
     stream(): Promise<import("./types").Stream | null>;
     category(categoryId: string): Promise<import("./types").Category | null>;
     refresh(): Promise<TokenResponse | undefined>;

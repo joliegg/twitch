@@ -16,7 +16,7 @@ class TwitchAPI {
   private refreshToken?: string;
 
 
-  private onTokenRefresh?: (newToken: string) => Promise<void>;
+  private onTokenRefresh?: (newToken: string, newRefreshToken: string) => Promise<void>;
 
   constructor (broadcasterId: string, clientId: string, clientSecret: string, applicationToken: string) {
     this.broadcasterId = broadcasterId;
@@ -26,7 +26,7 @@ class TwitchAPI {
   }
 
 
-  credentials (userToken: string, refreshToken: string, onTokenRefresh?: (newToken: string) => Promise<void>) {
+  credentials (userToken: string, refreshToken: string, onTokenRefresh?: (newToken: string, newRefreshToken: string) => Promise<void>) {
     this.userToken = userToken;
     this.refreshToken = refreshToken;
     this.onTokenRefresh = onTokenRefresh;
@@ -120,8 +120,11 @@ class TwitchAPI {
           const newToken = await this.refresh();
 
           if (newToken) {
+            this.userToken = newToken.access_token;
+            this.refreshToken = newToken.refresh_token;
+
             if (typeof this.onTokenRefresh === 'function') {
-              await this.onTokenRefresh(newToken.access_token);
+              await this.onTokenRefresh(newToken.access_token, newToken.refresh_token);
             }
 
 
