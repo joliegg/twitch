@@ -1,4 +1,4 @@
-import { Message } from './types/types';
+import { Message } from './types';
 declare class TwitchSocket {
     private static _instance?;
     private static _listeners;

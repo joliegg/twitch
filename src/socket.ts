@@ -1,5 +1,5 @@
 import WebSocket from 'ws';
-import { Message } from './types/types';
+import { Message } from './types';
 
 class TwitchSocket {
 

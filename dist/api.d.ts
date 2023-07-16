@@ -1,4 +1,4 @@
-import { Clip, TokenResponse, Video } from './types/types';
+import { Clip, TokenResponse, Video } from './types';
 declare class TwitchAPI {
     broadcasterId?: string;
     private clientId?;
@@ -9,8 +9,8 @@ declare class TwitchAPI {
     private onTokenRefresh?;
     constructor(broadcasterId: string, clientId: string, clientSecret: string, applicationToken: string);
     credentials(userToken: string, refreshToken: string, onTokenRefresh?: (newToken: string) => Promise<void>): void;
-    stream(): Promise<import("./types/types").Stream | null>;
-    category(categoryId: string): Promise<import("./types/types").Category | null>;
+    stream(): Promise<import("./types").Stream | null>;
+    category(categoryId: string): Promise<import("./types").Category | null>;
     refresh(): Promise<TokenResponse | undefined>;
     subscribe(type: string, session: string): Promise<void>;
     clips(n: number): Promise<Clip[]>;

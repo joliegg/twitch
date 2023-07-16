@@ -2,7 +2,7 @@ import url from 'url';
 
 import axios from 'axios';
 
-import { CategoriesResponse, Clip, ClipsResponse, StreamsResponse, TokenResponse, Video, VideosResponse } from './types/types';
+import { CategoriesResponse, Clip, ClipsResponse, StreamsResponse, TokenResponse, Video, VideosResponse } from './types';
 
 class TwitchAPI {
   broadcasterId?: string;
