@@ -140,8 +140,8 @@ export interface NotificationMessage extends Message {
             };
             created_at: string;
         };
+        event?: StreamOnlineEvent | StreamOfflineEvent | ChannelUpdateEvent;
     };
-    event?: StreamOnlineEvent | StreamOfflineEvent | ChannelUpdateEvent;
 }
 export interface Video {
     id: string;

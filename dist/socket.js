@@ -38,5 +38,8 @@ class TwitchSocket {
             callback.apply(null, [data]);
         }
     }
+    static close() {
+        this._instance?.close();
+    }
 }
 exports.default = TwitchSocket;

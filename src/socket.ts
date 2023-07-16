@@ -47,6 +47,10 @@ class TwitchSocket {
 		}
 	}
 
+  static close () {
+    this._instance?.close();
+  }
+
 }
 
 export default TwitchSocket;

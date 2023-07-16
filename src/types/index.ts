@@ -155,9 +155,9 @@ export interface NotificationMessage extends Message {
         sessin_id: string;
       };
       created_at: string;
-    }
+    },
+    event?: StreamOnlineEvent |  StreamOfflineEvent | ChannelUpdateEvent;
   };
-  event?: StreamOnlineEvent |  StreamOfflineEvent | ChannelUpdateEvent;
 }
 
 export interface Video {

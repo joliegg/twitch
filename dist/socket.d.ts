@@ -6,5 +6,6 @@ declare class TwitchSocket {
     static addListener(event: string, callback: (data?: Message) => void): void;
     static removeListener(event: string): void;
     static trigger(event: string, data?: Message): void;
+    static close(): void;
 }
 export default TwitchSocket;
