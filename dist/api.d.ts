@@ -1,19 +1,19 @@
-import { Clip, TokenResponse, Video } from './types';
+import { Clip, TokenResponse, Video, Stream, User } from './types';
 declare class TwitchAPI {
-    broadcasterId?: string;
     private clientId?;
     private clientSecret?;
     private applicationToken?;
     private userToken?;
     private refreshToken?;
     private onTokenRefresh?;
-    constructor(broadcasterId: string, clientId: string, clientSecret: string, applicationToken: string);
-    credentials(userToken: string, refreshToken: string, onTokenRefresh?: (newToken: string, newRefreshToken: string) => Promise<void>): void;
-    stream(): Promise<import("./types").Stream | null>;
+    constructor(clientId: string, clientSecret: string, applicationToken: string);
+    credentials(userToken: string, refreshToken: string, onTokenRefresh?: (data: TokenResponse) => Promise<void>): void;
+    stream(broadcasterId: string): Promise<Stream | null>;
     category(categoryId: string): Promise<import("./types").Category | null>;
-    refresh(): Promise<TokenResponse | undefined>;
-    subscribe(type: string, session: string): Promise<void>;
-    clips(n: number): Promise<Clip[]>;
-    videos(n: number): Promise<Video[]>;
+    refresh(): Promise<void | TokenResponse>;
+    subscribe(broadcasterId: string, type: string, session: string): Promise<void>;
+    clips(n: number, broadcasterId: string): Promise<Clip[]>;
+    videos(n: number, broadcasterId: string): Promise<Video[]>;
+    user(id: string, identifier?: string): Promise<User | null>;
 }
 export default TwitchAPI;

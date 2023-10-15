@@ -169,3 +169,18 @@ export interface VideosResponse {
     data: Video[];
     pagination?: Pagination;
 }
+export interface User {
+    id: string;
+    login: string;
+    display_name: string;
+    type: string;
+    broadcaster_type: string;
+    description: string;
+    profile_image_url: string;
+    offline_image_url: string;
+    email?: string;
+    created_at: string;
+}
+export interface UsersResponse {
+    data: User[];
+}

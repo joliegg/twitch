@@ -7,5 +7,5 @@ This library provides the ability to interact with the Twitch REST API and WebSo
 ## Installation
 
 ```bash
-yarn add @kirino-bot/twitch
+yarn add @joliegg/twitch
 ```

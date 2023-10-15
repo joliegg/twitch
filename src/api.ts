@@ -2,12 +2,9 @@ import url from 'url';
 
 import axios from 'axios';
 
-import { CategoriesResponse, Clip, ClipsResponse, StreamsResponse, TokenResponse, Video, VideosResponse } from './types';
+import { CategoriesResponse, Clip, ClipsResponse, StreamsResponse, TokenResponse, Video, VideosResponse, Stream, User, UsersResponse } from './types';
 
 class TwitchAPI {
-  broadcasterId?: string;
-
-
   private clientId?: string;
   private clientSecret?: string;
 
@@ -16,35 +13,43 @@ class TwitchAPI {
   private refreshToken?: string;
 
 
-  private onTokenRefresh?: (newToken: string, newRefreshToken: string) => Promise<void>;
+  private onTokenRefresh?: (data: TokenResponse) => Promise<void>;
 
-  constructor (broadcasterId: string, clientId: string, clientSecret: string, applicationToken: string) {
-    this.broadcasterId = broadcasterId;
+  constructor (clientId: string, clientSecret: string, applicationToken: string) {
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.applicationToken = applicationToken;
   }
 
-
-  credentials (userToken: string, refreshToken: string, onTokenRefresh?: (newToken: string, newRefreshToken: string) => Promise<void>) {
+  credentials (userToken: string, refreshToken: string, onTokenRefresh?: (data: TokenResponse) => Promise<void>) {
     this.userToken = userToken;
     this.refreshToken = refreshToken;
     this.onTokenRefresh = onTokenRefresh;
   }
 
 
-  async stream () {
-    const { data } = await axios.get<StreamsResponse>(`https://api.twitch.tv/helix/streams?user_id=${this.broadcasterId}`, {
-      headers: {
-        'Authorization': `Bearer ${this.applicationToken}`,
-        'Client-Id': this.clientId,
-      }
-    });
+  async stream (broadcasterId: string): Promise<Stream | null> {
+    try {
+      const { data } = await axios.get<StreamsResponse>(`https://api.twitch.tv/helix/streams?user_id=${broadcasterId}`, {
+        headers: {
+          'Authorization': `Bearer ${this.userToken}`,
+          'Client-Id': this.clientId,
+        }
+      });
 
-    if (Array.isArray(data.data)) {
-      if (data.data.length > 0) {
-        return data.data[0];
+      if (Array.isArray(data.data)) {
+        if (data.data.length > 0) {
+          return data.data[0];
+        }
       }
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        if (error?.response?.status === 401) {
+          await this.refresh();
+          return this.stream(broadcasterId);
+        }
+      }
+      throw error;
     }
 
     return null;
@@ -53,7 +58,7 @@ class TwitchAPI {
   async category (categoryId: string) {
     const { data } = await axios.get<CategoriesResponse>(`https://api.twitch.tv/helix/games?id=${categoryId}`, {
       headers: {
-        'Authorization': `Bearer ${this.applicationToken}`,
+        'Authorization': `Bearer ${this.userToken}`,
         'Client-Id': this.clientId,
       }
     });
@@ -85,21 +90,27 @@ class TwitchAPI {
         },
       });
 
-      return data;
+      this.applicationToken = data.access_token;
+      this.refreshToken = data.refresh_token;
 
+      if (typeof this.onTokenRefresh === 'function') {
+        return this.onTokenRefresh(data);
+      }
+
+      return data;
     } catch (error) {
       console.error(error);
+      throw error;
     }
-
   }
 
 
-  async subscribe (type: string, session: string): Promise<void> {
+  async subscribe (broadcasterId: string, type: string, session: string): Promise<void> {
     try {
       await axios.post('https://api.twitch.tv/helix/eventsub/subscriptions', {
         type,
         condition: {
-          broadcaster_user_id: this.broadcasterId,
+          broadcaster_user_id: broadcasterId,
         },
         version: 1,
         transport: {
@@ -109,35 +120,23 @@ class TwitchAPI {
         },
       }, {
         headers: {
-            'Authorization': `Bearer ${this.userToken}`,
-            'Client-Id': this.clientId,
+          'Authorization': `Bearer ${this.userToken}`,
+          'Client-Id': this.clientId,
         }
       });
-    } catch (error) {
-      if (error instanceof axios.AxiosError) {
-        if (error.response && error.response.status === 401) {
-
-          const newToken = await this.refresh();
-
-          if (newToken) {
-            this.userToken = newToken.access_token;
-            this.refreshToken = newToken.refresh_token;
-
-            if (typeof this.onTokenRefresh === 'function') {
-              await this.onTokenRefresh(newToken.access_token, newToken.refresh_token);
-            }
-
-
-            return this.subscribe(type, session);
-          }
-
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        if (error?.response?.status === 401) {
+          await this.refresh();
+          return this.subscribe(broadcasterId, type, session);
         }
       }
 
+      throw error;
     }
   }
 
-  async clips (n: number)  {
+  async clips (n: number, broadcasterId: string): Promise<Clip[]>  {
     const first = n < 100 ? n : 100;
     const max = first < 100 ? 1 : Math.ceil(n / 100);
 
@@ -145,27 +144,38 @@ class TwitchAPI {
 
     let pagination: string | null = null;
 
-    for (let i = 0; i < max; i++) {
-      const url: string = `https://api.twitch.tv/helix/clips?broadcaster_id=${this.broadcasterId}&first=${first}${pagination ? `&after=${pagination}` : ""}`;
+    try {
+      for (let i = 0; i < max; i++) {
+        const url: string = `https://api.twitch.tv/helix/clips?broadcaster_id=${broadcasterId}&first=${first}${pagination ? `&after=${pagination}` : ""}`;
 
-      const { data } = await axios.get<ClipsResponse>(url, {
-        headers: {
-          'Authorization': `Bearer ${this.applicationToken}`,
-          'Client-Id': this.clientId,
+        const { data } = await axios.get<ClipsResponse>(url, {
+          headers: {
+            'Authorization': `Bearer ${this.userToken}`,
+            'Client-Id': this.clientId,
+          }
+        });
+
+        pagination = data.pagination?.cursor ?? null;
+
+        if (Array.isArray(data.data)) {
+          clips = clips.concat(data.data);
         }
-      });
-
-      pagination = data.pagination?.cursor ?? null;
-
-      if (Array.isArray(data.data)) {
-        clips = clips.concat(data.data);
       }
+
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        if (error?.response?.status === 401) {
+          await this.refresh();
+          return this.clips(n, broadcasterId);
+        }
+      }
+      throw error;
     }
 
     return clips;
   }
 
-  async videos (n: number) {
+  async videos (n: number, broadcasterId: string): Promise<Video[]> {
     const first = n < 100 ? n : 100;
     const max = first < 100 ? 1 : Math.ceil(n / 100);
 
@@ -173,24 +183,61 @@ class TwitchAPI {
 
     let pagination: string | null = null;
 
-    for (let i = 0; i < max; i++) {
-      const url: string = `https://api.twitch.tv/helix/videos?user_id=${this.broadcasterId}&first=${first}${pagination ? `&after=${pagination}` : ""}`;
+    try {
+      for (let i = 0; i < max; i++) {
+        const url: string = `https://api.twitch.tv/helix/videos?user_id=${broadcasterId}&first=${first}${pagination ? `&after=${pagination}` : ""}`;
 
-      const { data } = await axios.get<VideosResponse>(url, {
+        const { data } = await axios.get<VideosResponse>(url, {
+          headers: {
+            'Authorization': `Bearer ${this.userToken}`,
+            'Client-Id': this.clientId,
+          }
+        });
+
+        pagination = data.pagination?.cursor ?? null;
+
+        if (Array.isArray(data.data)) {
+          videos = videos.concat(data.data);
+        }
+      }
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        if (error?.response?.status === 401) {
+          await this.refresh();
+          return this.videos(n, broadcasterId);
+        }
+      }
+      throw error;
+    }
+
+    return videos;
+  }
+
+  async user (id: string, identifier: string = 'login'): Promise<User | null> {
+    try {
+      const { data } = await axios.get<UsersResponse>(`https://api.twitch.tv/helix/users?${identifier}=${id}`, {
         headers: {
-          'Authorization': `Bearer ${this.applicationToken}`,
+          'Authorization': `Bearer ${this.userToken}`,
           'Client-Id': this.clientId,
         }
       });
 
-      pagination = data.pagination?.cursor ?? null;
-
       if (Array.isArray(data.data)) {
-        videos = videos.concat(data.data);
+        if (data.data.length > 0) {
+          return data.data[0];
+        }
       }
-    }
 
-    return videos;
+      return null;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        if (error?.response?.status === 401) {
+          await this.refresh();
+          return this.user(id, identifier);
+        }
+      }
+      throw error;
+    }
   }
 }
 
