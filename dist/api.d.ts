@@ -15,6 +15,6 @@ declare class TwitchAPI {
     clips(n: number, broadcasterId: string): Promise<Clip[]>;
     videos(n: number, broadcasterId: string): Promise<Video[]>;
     user(id: string, identifier?: string): Promise<User | null>;
-    follower(userId: string): Promise<Follower | null>;
+    follower(userId: string, broadcasterId: string): Promise<Follower | null>;
 }
 export default TwitchAPI;

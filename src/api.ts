@@ -253,9 +253,9 @@ class TwitchAPI {
     }
   }
 
-  async follower (userId: string): Promise<Follower | null> {
+  async follower (userId: string, broadcasterId: string): Promise<Follower | null> {
     try {
-      const { data } = await axios.get<FollowersResponse>(`https://api.twitch.tv/helix/channels/followers?user_id=${userId}`, {
+      const { data } = await axios.get<FollowersResponse>(`https://api.twitch.tv/helix/channels/followers?user_id=${userId}&broadcaster_id=${broadcasterId}`, {
         headers: {
           'Authorization': `Bearer ${this.userToken}`,
           'Client-Id': this.clientId,
@@ -273,7 +273,7 @@ class TwitchAPI {
       if (axios.isAxiosError(error)) {
         if (error?.response?.status === 401) {
           await this.refresh();
-          return this.follower(userId);
+          return this.follower(userId, broadcasterId);
         }
       }
       throw error;
