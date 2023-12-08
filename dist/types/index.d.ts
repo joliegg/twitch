@@ -184,3 +184,25 @@ export interface User {
 export interface UsersResponse {
     data: User[];
 }
+export interface Follow {
+    broadcaster_id: string;
+    broadcaster_login: string;
+    broadcaster_name: string;
+    followed_at: string;
+}
+export interface FollowsResponse {
+    total: number;
+    data: Follow[];
+    pagination?: Pagination;
+}
+export interface Follower {
+    user_id: string;
+    broadcaster_id: string;
+    user_login: string;
+    followed_at: string;
+}
+export interface FollowersResponse {
+    total: number;
+    data: Follower[];
+    pagination?: Pagination;
+}

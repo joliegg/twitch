@@ -203,5 +203,30 @@ class TwitchAPI {
             throw error;
         }
     }
+    async follower(userId) {
+        try {
+            const { data } = await axios_1.default.get(`https://api.twitch.tv/helix/channels/followers?user_id=${userId}`, {
+                headers: {
+                    'Authorization': `Bearer ${this.userToken}`,
+                    'Client-Id': this.clientId,
+                }
+            });
+            if (Array.isArray(data.data)) {
+                if (data.data.length > 0) {
+                    return data.data[0];
+                }
+            }
+            return null;
+        }
+        catch (error) {
+            if (axios_1.default.isAxiosError(error)) {
+                if (error?.response?.status === 401) {
+                    await this.refresh();
+                    return this.follower(userId);
+                }
+            }
+            throw error;
+        }
+    }
 }
 exports.default = TwitchAPI;

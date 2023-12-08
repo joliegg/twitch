@@ -2,7 +2,20 @@ import url from 'url';
 
 import axios from 'axios';
 
-import { CategoriesResponse, Clip, ClipsResponse, StreamsResponse, TokenResponse, Video, VideosResponse, Stream, User, UsersResponse } from './types';
+import {
+  CategoriesResponse,
+  Clip,
+  ClipsResponse,
+  StreamsResponse,
+  TokenResponse,
+  Video,
+  VideosResponse,
+  Stream,
+  User,
+  UsersResponse,
+  Follower,
+  FollowersResponse
+} from './types';
 
 class TwitchAPI {
   private clientId?: string;
@@ -234,6 +247,33 @@ class TwitchAPI {
         if (error?.response?.status === 401) {
           await this.refresh();
           return this.user(id, identifier);
+        }
+      }
+      throw error;
+    }
+  }
+
+  async follower (userId: string): Promise<Follower | null> {
+    try {
+      const { data } = await axios.get<FollowersResponse>(`https://api.twitch.tv/helix/channels/followers?user_id=${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${this.userToken}`,
+          'Client-Id': this.clientId,
+        }
+      });
+
+      if (Array.isArray(data.data)) {
+        if (data.data.length > 0) {
+          return data.data[0];
+        }
+      }
+
+      return null;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        if (error?.response?.status === 401) {
+          await this.refresh();
+          return this.follower(userId);
         }
       }
       throw error;

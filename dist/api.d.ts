@@ -1,4 +1,4 @@
-import { Clip, TokenResponse, Video, Stream, User } from './types';
+import { Clip, TokenResponse, Video, Stream, User, Follower } from './types';
 declare class TwitchAPI {
     private clientId?;
     private clientSecret?;
@@ -15,5 +15,6 @@ declare class TwitchAPI {
     clips(n: number, broadcasterId: string): Promise<Clip[]>;
     videos(n: number, broadcasterId: string): Promise<Video[]>;
     user(id: string, identifier?: string): Promise<User | null>;
+    follower(userId: string): Promise<Follower | null>;
 }
 export default TwitchAPI;
