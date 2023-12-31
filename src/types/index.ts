@@ -230,3 +230,11 @@ export interface FollowersResponse {
   data: Follower[];
   pagination?: Pagination;
 }
+
+export interface ChatbotOptions {
+  identity: {
+    username: string;
+    password: string;
+  };
+  channels: string[];
+}

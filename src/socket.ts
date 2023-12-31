@@ -1,45 +1,39 @@
 import WebSocket from 'ws';
 import { Message } from './types';
 
-class TwitchSocket {
+class Socket {
 
-  private static _instance?: WebSocket;
-  private static _listeners: Record<string, (data?: Message) => void>
+  private socket?: WebSocket;
+  private _listeners: Record<string, (data?: Message) => void> = {};
 
-	static init (url: string) {
-    if (this._instance instanceof WebSocket) {
-      this._instance.close();
-    }
-
-
+	constructor (url: string) {
 		// Setup Socket Connection
-    this._instance = new WebSocket(url);
+    this.socket = new WebSocket(url);
 
-    this._instance.on('open', () => {
+    this.socket.on('open', () => {
       this.trigger('open');
-      console.log('Twitch WebSocket Open');
     });
 
-    this._instance.on('message', (message: string) => {
+    this.socket.on('message', (message: string) => {
       const data = JSON.parse(message) as Message;
       this.trigger('message', data);
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    this._instance.on('close', (code: number, reason: Buffer) => {
+    this.socket.on('close', (code: number, reason: Buffer) => {
       this.trigger('close');
     });
 	}
 
-	static addListener (event: string, callback: (data?: Message) => void) {
+	on (event: string, callback: (data?: Message) => void) {
 		this._listeners[event] = callback;
 	}
 
-	static removeListener (event: string) {
+	removeListener (event: string) {
 		delete this._listeners[event];
 	}
 
-	static trigger (event: string, data?: Message) {
+	trigger (event: string, data?: Message) {
 		const callback = this._listeners[event];
 
 		if (typeof callback === 'function') {
@@ -47,10 +41,10 @@ class TwitchSocket {
 		}
 	}
 
-  static close () {
-    this._instance?.close();
+  close () {
+    this.socket?.close();
   }
 
 }
 
-export default TwitchSocket;
+export default Socket;

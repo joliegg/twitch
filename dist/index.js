@@ -17,9 +17,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TwitchSocket = exports.TwitchAPI = void 0;
+exports.Chatbot = exports.Socket = exports.TwitchAPI = void 0;
 var api_1 = require("./api");
 Object.defineProperty(exports, "TwitchAPI", { enumerable: true, get: function () { return __importDefault(api_1).default; } });
 var socket_1 = require("./socket");
-Object.defineProperty(exports, "TwitchSocket", { enumerable: true, get: function () { return __importDefault(socket_1).default; } });
+Object.defineProperty(exports, "Socket", { enumerable: true, get: function () { return __importDefault(socket_1).default; } });
+var chatbot_1 = require("./chatbot");
+Object.defineProperty(exports, "Chatbot", { enumerable: true, get: function () { return __importDefault(chatbot_1).default; } });
 __exportStar(require("./types"), exports);

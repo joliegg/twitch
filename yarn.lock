@@ -110,6 +110,11 @@
   resolved "https://registry.yarnpkg.com/@types/semver/-/semver-7.5.3.tgz#9a726e116beb26c24f1ccd6850201e1246122e04"
   integrity sha512-OxepLK9EuNEIPxWNME+C6WwbRAOOI2o2BaQEGzz5Lu2e4Z5eDnEo+/aVEDMIXywoJitJ7xWd641wrGLZdtwRyw==
 
+"@types/tmi.js@^1.8.6":
+  version "1.8.6"
+  resolved "https://registry.yarnpkg.com/@types/tmi.js/-/tmi.js-1.8.6.tgz#f95a397d20398d0e1333a2eb8b7c3c494ce96b55"
+  integrity sha512-LVzNK7AxTMyh9qHLanAQR1o0I9XzfbIcXk85cx85igmCJHHO1Sm71sdhQ8Mj1WmRGzynPIoCXx6mVaFynWbsQw==
+
 "@types/ws@^8.5.6":
   version "8.5.6"
   resolved "https://registry.yarnpkg.com/@types/ws/-/ws-8.5.6.tgz#e9ad51f0ab79b9110c50916c9fcbddc36d373065"

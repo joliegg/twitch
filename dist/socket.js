@@ -4,42 +4,38 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const ws_1 = __importDefault(require("ws"));
-class TwitchSocket {
-    static _instance;
-    static _listeners;
-    static init(url) {
-        if (this._instance instanceof ws_1.default) {
-            this._instance.close();
-        }
+class Socket {
+    socket;
+    _listeners = {};
+    constructor(url) {
         // Setup Socket Connection
-        this._instance = new ws_1.default(url);
-        this._instance.on('open', () => {
+        this.socket = new ws_1.default(url);
+        this.socket.on('open', () => {
             this.trigger('open');
-            console.log('Twitch WebSocket Open');
         });
-        this._instance.on('message', (message) => {
+        this.socket.on('message', (message) => {
             const data = JSON.parse(message);
             this.trigger('message', data);
         });
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        this._instance.on('close', (code, reason) => {
+        this.socket.on('close', (code, reason) => {
             this.trigger('close');
         });
     }
-    static addListener(event, callback) {
+    on(event, callback) {
         this._listeners[event] = callback;
     }
-    static removeListener(event) {
+    removeListener(event) {
         delete this._listeners[event];
     }
-    static trigger(event, data) {
+    trigger(event, data) {
         const callback = this._listeners[event];
         if (typeof callback === 'function') {
             callback.apply(null, [data]);
         }
     }
-    static close() {
-        this._instance?.close();
+    close() {
+        this.socket?.close();
     }
 }
-exports.default = TwitchSocket;
+exports.default = Socket;
