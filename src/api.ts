@@ -26,7 +26,7 @@ class TwitchAPI {
   private refreshToken?: string;
 
 
-  private onTokenRefresh?: (data: TokenResponse) => Promise<void>;
+  private onTokenRefresh?: (data: TokenResponse) => Promise<TokenResponse>;
 
   constructor (clientId: string, clientSecret: string, applicationToken: string) {
     this.clientId = clientId;
@@ -34,7 +34,7 @@ class TwitchAPI {
     this.applicationToken = applicationToken;
   }
 
-  credentials (userToken: string, refreshToken: string, onTokenRefresh?: (data: TokenResponse) => Promise<void>) {
+  credentials (userToken: string, refreshToken: string, onTokenRefresh?: (data: TokenResponse) => Promise<TokenResponse>) {
     this.userToken = userToken;
     this.refreshToken = refreshToken;
     this.onTokenRefresh = onTokenRefresh;
@@ -57,7 +57,7 @@ class TwitchAPI {
       }
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        if (error?.response?.status === 401) {
+        if (error?.response?.status === 401 || error?.response?.status === 502) {
           await this.refresh();
           return this.stream(broadcasterId);
         }
@@ -85,8 +85,7 @@ class TwitchAPI {
     return null;
   }
 
-  async refresh () {
-
+  async refresh (): Promise<TokenResponse> {
     const params = new url.URLSearchParams({
       client_id: this.clientId ?? '',
       client_secret: this.clientSecret ?? '',
@@ -113,6 +112,16 @@ class TwitchAPI {
       return data;
     } catch (error) {
       console.error(error);
+
+      // Retry when twitch api fails
+      if (axios.isAxiosError(error)) {
+        if (error?.response?.status ?? 0 >= 500) {
+          // Wait a bit before retrying
+          await new Promise(resolve => setTimeout(resolve, 500));
+          return this.refresh();
+        }
+      }
+
       throw error;
     }
   }
@@ -139,7 +148,7 @@ class TwitchAPI {
       });
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        if (error?.response?.status === 401) {
+        if (error?.response?.status === 401 || error?.response?.status === 502) {
           await this.refresh();
           return this.subscribe(broadcasterId, type, session);
         }
@@ -177,7 +186,7 @@ class TwitchAPI {
 
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        if (error?.response?.status === 401) {
+        if (error?.response?.status === 401 || error?.response?.status === 502) {
           await this.refresh();
           return this.clips(n, broadcasterId);
         }
@@ -215,7 +224,7 @@ class TwitchAPI {
       }
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        if (error?.response?.status === 401) {
+        if (error?.response?.status === 401 || error?.response?.status === 502) {
           await this.refresh();
           return this.videos(n, broadcasterId);
         }
@@ -224,6 +233,35 @@ class TwitchAPI {
     }
 
     return videos;
+  }
+
+  async video (id: string): Promise<Video | null> {
+    const url: string = `https://api.twitch.tv/helix/videos?id=${id}`;
+
+    try {
+      const { data } = await axios.get<VideosResponse>(url, {
+        headers: {
+          'Authorization': `Bearer ${this.userToken}`,
+          'Client-Id': this.clientId,
+        }
+      });
+
+      if (Array.isArray(data.data)) {
+        if (data.data.length > 0) {
+          return data.data[0];
+        }
+      }
+
+      return null;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        if (error?.response?.status === 401 || error?.response?.status === 502) {
+          await this.refresh();
+          return this.video(id);
+        }
+      }
+      throw error;
+    }
   }
 
   async user (id: string, identifier: string = 'login'): Promise<User | null> {
@@ -244,7 +282,7 @@ class TwitchAPI {
       return null;
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        if (error?.response?.status === 401) {
+        if (error?.response?.status === 401 || error?.response?.status === 502) {
           await this.refresh();
           return this.user(id, identifier);
         }
@@ -271,7 +309,7 @@ class TwitchAPI {
       return null;
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        if (error?.response?.status === 401) {
+        if (error?.response?.status === 401 || error?.response?.status === 502) {
           await this.refresh();
           return this.follower(userId, broadcasterId);
         }

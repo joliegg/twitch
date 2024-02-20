@@ -38,7 +38,7 @@ class TwitchAPI {
         }
         catch (error) {
             if (axios_1.default.isAxiosError(error)) {
-                if (error?.response?.status === 401) {
+                if (error?.response?.status === 401 || error?.response?.status === 502) {
                     await this.refresh();
                     return this.stream(broadcasterId);
                 }
@@ -83,6 +83,14 @@ class TwitchAPI {
         }
         catch (error) {
             console.error(error);
+            // Retry when twitch api fails
+            if (axios_1.default.isAxiosError(error)) {
+                if (error?.response?.status ?? 0 >= 500) {
+                    // Wait a bit before retrying
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    return this.refresh();
+                }
+            }
             throw error;
         }
     }
@@ -108,7 +116,7 @@ class TwitchAPI {
         }
         catch (error) {
             if (axios_1.default.isAxiosError(error)) {
-                if (error?.response?.status === 401) {
+                if (error?.response?.status === 401 || error?.response?.status === 502) {
                     await this.refresh();
                     return this.subscribe(broadcasterId, type, session);
                 }
@@ -138,7 +146,7 @@ class TwitchAPI {
         }
         catch (error) {
             if (axios_1.default.isAxiosError(error)) {
-                if (error?.response?.status === 401) {
+                if (error?.response?.status === 401 || error?.response?.status === 502) {
                     await this.refresh();
                     return this.clips(n, broadcasterId);
                 }
@@ -169,7 +177,7 @@ class TwitchAPI {
         }
         catch (error) {
             if (axios_1.default.isAxiosError(error)) {
-                if (error?.response?.status === 401) {
+                if (error?.response?.status === 401 || error?.response?.status === 502) {
                     await this.refresh();
                     return this.videos(n, broadcasterId);
                 }
@@ -177,6 +185,32 @@ class TwitchAPI {
             throw error;
         }
         return videos;
+    }
+    async video(id) {
+        const url = `https://api.twitch.tv/helix/videos?id=${id}`;
+        try {
+            const { data } = await axios_1.default.get(url, {
+                headers: {
+                    'Authorization': `Bearer ${this.userToken}`,
+                    'Client-Id': this.clientId,
+                }
+            });
+            if (Array.isArray(data.data)) {
+                if (data.data.length > 0) {
+                    return data.data[0];
+                }
+            }
+            return null;
+        }
+        catch (error) {
+            if (axios_1.default.isAxiosError(error)) {
+                if (error?.response?.status === 401 || error?.response?.status === 502) {
+                    await this.refresh();
+                    return this.video(id);
+                }
+            }
+            throw error;
+        }
     }
     async user(id, identifier = 'login') {
         try {
@@ -195,7 +229,7 @@ class TwitchAPI {
         }
         catch (error) {
             if (axios_1.default.isAxiosError(error)) {
-                if (error?.response?.status === 401) {
+                if (error?.response?.status === 401 || error?.response?.status === 502) {
                     await this.refresh();
                     return this.user(id, identifier);
                 }
@@ -220,7 +254,7 @@ class TwitchAPI {
         }
         catch (error) {
             if (axios_1.default.isAxiosError(error)) {
-                if (error?.response?.status === 401) {
+                if (error?.response?.status === 401 || error?.response?.status === 502) {
                     await this.refresh();
                     return this.follower(userId, broadcasterId);
                 }

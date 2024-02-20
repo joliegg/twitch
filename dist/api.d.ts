@@ -7,13 +7,14 @@ declare class TwitchAPI {
     private refreshToken?;
     private onTokenRefresh?;
     constructor(clientId: string, clientSecret: string, applicationToken: string);
-    credentials(userToken: string, refreshToken: string, onTokenRefresh?: (data: TokenResponse) => Promise<void>): void;
+    credentials(userToken: string, refreshToken: string, onTokenRefresh?: (data: TokenResponse) => Promise<TokenResponse>): void;
     stream(broadcasterId: string): Promise<Stream | null>;
     category(categoryId: string): Promise<import("./types").Category | null>;
-    refresh(): Promise<void | TokenResponse>;
+    refresh(): Promise<TokenResponse>;
     subscribe(broadcasterId: string, type: string, session: string): Promise<void>;
     clips(n: number, broadcasterId: string): Promise<Clip[]>;
     videos(n: number, broadcasterId: string): Promise<Video[]>;
+    video(id: string): Promise<Video | null>;
     user(id: string, identifier?: string): Promise<User | null>;
     follower(userId: string, broadcasterId: string): Promise<Follower | null>;
 }
