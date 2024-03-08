@@ -102,7 +102,7 @@ class TwitchAPI {
         },
       });
 
-      this.applicationToken = data.access_token;
+      this.userToken = data.access_token;
       this.refreshToken = data.refresh_token;
 
       if (typeof this.onTokenRefresh === 'function') {
