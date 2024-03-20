@@ -207,6 +207,9 @@ export interface FollowersResponse {
     pagination?: Pagination;
 }
 export interface ChatbotOptions {
+    options: {
+        debug: boolean;
+    };
     identity: {
         username: string;
         password: string;

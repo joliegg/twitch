@@ -1,6 +1,6 @@
 {
   "name": "@joliegg/twitch",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "A set of tools to send and receive data from Twitch",
   "author": "Diana Islas Ocampo",
   "main": "dist/index.js",

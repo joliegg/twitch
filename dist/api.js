@@ -21,6 +21,7 @@ class TwitchAPI {
         this.userToken = userToken;
         this.refreshToken = refreshToken;
         this.onTokenRefresh = onTokenRefresh;
+        return this.refresh();
     }
     async stream(broadcasterId) {
         try {
@@ -48,16 +49,27 @@ class TwitchAPI {
         return null;
     }
     async category(categoryId) {
-        const { data } = await axios_1.default.get(`https://api.twitch.tv/helix/games?id=${categoryId}`, {
-            headers: {
-                'Authorization': `Bearer ${this.userToken}`,
-                'Client-Id': this.clientId,
+        try {
+            const { data } = await axios_1.default.get(`https://api.twitch.tv/helix/games?id=${categoryId}`, {
+                headers: {
+                    'Authorization': `Bearer ${this.userToken}`,
+                    'Client-Id': this.clientId,
+                }
+            });
+            if (Array.isArray(data.data)) {
+                if (data.data.length > 0) {
+                    return data.data[0];
+                }
             }
-        });
-        if (Array.isArray(data.data)) {
-            if (data.data.length > 0) {
-                return data.data[0];
+        }
+        catch (error) {
+            if (axios_1.default.isAxiosError(error)) {
+                if (error?.response?.status === 401 || error?.response?.status === 502) {
+                    await this.refresh();
+                    return this.category(categoryId);
+                }
             }
+            throw error;
         }
         return null;
     }

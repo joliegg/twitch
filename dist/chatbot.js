@@ -9,6 +9,7 @@ class Chatbot {
     client;
     constructor(username, token, channels) {
         this.options = {
+            options: { debug: true },
             identity: {
                 username,
                 password: token

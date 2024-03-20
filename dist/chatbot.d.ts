@@ -1,6 +1,6 @@
 import { Events } from 'tmi.js';
 declare class Chatbot {
-    private options?;
+    private options;
     private client;
     constructor(username: string, token: string, channels: string[]);
     connect(): Promise<[string, number]>;
