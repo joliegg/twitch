@@ -232,6 +232,9 @@ export interface FollowersResponse {
 }
 
 export interface ChatbotOptions {
+  options: {
+    debug: boolean;
+  };
   identity: {
     username: string;
     password: string;

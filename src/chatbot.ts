@@ -2,11 +2,12 @@ import tmi, { Client, Events } from 'tmi.js';
 import { ChatbotOptions } from './types';
 
 class Chatbot {
-  private options?: ChatbotOptions;
+  private options: ChatbotOptions;
   private client: Client;
 
   constructor(username: string, token: string, channels: string[]) {
     this.options = {
+      options: { debug: true },
       identity: {
         username,
         password: token
