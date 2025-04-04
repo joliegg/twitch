@@ -5,11 +5,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const ws_1 = __importDefault(require("ws"));
 class Socket {
+    url;
     socket;
-    _listeners = {};
+    listeners = {};
+    _keepAlive = null;
+    _keepAliveInterval = 10000;
     constructor(url) {
+        this.url = url;
+    }
+    connect() {
+        if (this._keepAlive) {
+            clearTimeout(this._keepAlive);
+        }
         // Setup Socket Connection
-        this.socket = new ws_1.default(url);
+        this.socket = new ws_1.default(this.url);
         this.socket.on('open', () => {
             this.trigger('open');
         });
@@ -23,19 +32,22 @@ class Socket {
         });
     }
     on(event, callback) {
-        this._listeners[event] = callback;
+        this.listeners[event] = callback;
     }
     removeListener(event) {
-        delete this._listeners[event];
+        delete this.listeners[event];
     }
     trigger(event, data) {
-        const callback = this._listeners[event];
+        const callback = this.listeners[event];
         if (typeof callback === 'function') {
             callback.apply(null, [data]);
         }
     }
-    close() {
-        this.socket?.close();
+    async close() {
+        if (this.socket instanceof ws_1.default) {
+            this.socket.close();
+            return new Promise((resolve, reject) => setTimeout(resolve, 500));
+        }
     }
 }
 exports.default = Socket;

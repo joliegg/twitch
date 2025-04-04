@@ -23,6 +23,37 @@ class TwitchAPI {
         this.onTokenRefresh = onTokenRefresh;
         return this.refresh();
     }
+    async streams(n, broadcasterId) {
+        const first = n < 100 ? n : 100;
+        const max = first < 100 ? 1 : Math.ceil(n / 100);
+        let streams = [];
+        let pagination = null;
+        try {
+            for (let i = 0; i < max; i++) {
+                const url = `https://api.twitch.tv/helix/streams?user_id=${broadcasterId}&first=${first}${pagination ? `&after=${pagination}` : ""}`;
+                const { data } = await axios_1.default.get(url, {
+                    headers: {
+                        'Authorization': `Bearer ${this.userToken}`,
+                        'Client-Id': this.clientId,
+                    }
+                });
+                pagination = data.pagination?.cursor ?? null;
+                if (Array.isArray(data.data)) {
+                    streams = streams.concat(data.data);
+                }
+            }
+            return streams;
+        }
+        catch (error) {
+            if (axios_1.default.isAxiosError(error)) {
+                if (error?.response?.status === 401 || error?.response?.status === 502) {
+                    await this.refresh();
+                    return this.streams(n, broadcasterId);
+                }
+            }
+            throw error;
+        }
+    }
     async stream(broadcasterId) {
         try {
             const { data } = await axios_1.default.get(`https://api.twitch.tv/helix/streams?user_id=${broadcasterId}`, {
@@ -106,14 +137,15 @@ class TwitchAPI {
             throw error;
         }
     }
-    async subscribe(broadcasterId, type, session) {
+    async subscribe(broadcasterId, type, session, conditions = {}, version = 1) {
         try {
             await axios_1.default.post('https://api.twitch.tv/helix/eventsub/subscriptions', {
                 type,
                 condition: {
                     broadcaster_user_id: broadcasterId,
+                    ...conditions,
                 },
-                version: 1,
+                version: version,
                 transport: {
                     method: 'websocket',
                     // callback: 'https://bot.reinocake.com/api/v1/twitch/events',

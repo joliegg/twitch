@@ -44,6 +44,44 @@ class TwitchAPI {
   }
 
 
+  async streams (n: number, broadcasterId: string): Promise<Stream[]> {
+    const first = n < 100 ? n : 100;
+    const max = first < 100 ? 1 : Math.ceil(n / 100);
+
+    let streams: Stream[] = []
+
+    let pagination: string | null = null;
+
+    try {
+      for (let i = 0; i < max; i++) {
+        const url: string = `https://api.twitch.tv/helix/streams?user_id=${broadcasterId}&first=${first}${pagination ? `&after=${pagination}` : ""}`;
+
+        const { data } = await axios.get<StreamsResponse>(url, {
+          headers: {
+            'Authorization': `Bearer ${this.userToken}`,
+            'Client-Id': this.clientId,
+          }
+        });
+
+        pagination = data.pagination?.cursor ?? null;
+
+        if (Array.isArray(data.data)) {
+          streams = streams.concat(data.data);
+        }
+      }
+
+      return streams;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        if (error?.response?.status === 401 || error?.response?.status === 502) {
+          await this.refresh();
+          return this.streams(n, broadcasterId);
+        }
+      }
+      throw error;
+    }
+  }
+
   async stream (broadcasterId: string): Promise<Stream | null> {
     try {
       const { data } = await axios.get<StreamsResponse>(`https://api.twitch.tv/helix/streams?user_id=${broadcasterId}`, {
@@ -140,14 +178,15 @@ class TwitchAPI {
   }
 
 
-  async subscribe (broadcasterId: string, type: string, session: string): Promise<void> {
+  async subscribe (broadcasterId: string, type: string, session: string, conditions: Record<string, string | number> = {}, version = 1): Promise<void> {
     try {
       await axios.post('https://api.twitch.tv/helix/eventsub/subscriptions', {
         type,
         condition: {
           broadcaster_user_id: broadcasterId,
+          ...conditions,
         },
-        version: 1,
+        version: version,
         transport: {
           method: 'websocket',
           // callback: 'https://bot.reinocake.com/api/v1/twitch/events',

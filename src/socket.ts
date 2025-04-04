@@ -2,13 +2,26 @@ import WebSocket from 'ws';
 import { Message } from './types';
 
 class Socket {
+  protected url: string;
 
-  private socket?: WebSocket;
-  private _listeners: Record<string, (data?: Message) => void> = {};
+  protected socket?: WebSocket;
+  protected listeners: Record<string, (data?: Message) => void> = {};
 
-	constructor (url: string) {
+  private _keepAlive: NodeJS.Timeout | null = null;
+  private _keepAliveInterval = 10000;
+
+
+	constructor (url: string, ) {
+    this.url = url;
+	}
+
+  connect () {
+    if (this._keepAlive) {
+      clearTimeout(this._keepAlive);
+    }
+
 		// Setup Socket Connection
-    this.socket = new WebSocket(url);
+    this.socket = new WebSocket(this.url);
 
     this.socket.on('open', () => {
       this.trigger('open');
@@ -23,26 +36,30 @@ class Socket {
     this.socket.on('close', (code: number, reason: Buffer) => {
       this.trigger('close');
     });
-	}
+  }
 
 	on (event: string, callback: (data?: Message) => void) {
-		this._listeners[event] = callback;
+		this.listeners[event] = callback;
 	}
 
 	removeListener (event: string) {
-		delete this._listeners[event];
+		delete this.listeners[event];
 	}
 
 	trigger (event: string, data?: Message) {
-		const callback = this._listeners[event];
+		const callback = this.listeners[event];
 
 		if (typeof callback === 'function') {
 			callback.apply(null, [data]);
 		}
 	}
 
-  close () {
-    this.socket?.close();
+  async close () {
+    if (this.socket instanceof WebSocket) {
+      this.socket.close();
+
+      return new Promise((resolve, reject) => setTimeout(resolve, 500));
+    }
   }
 
 }
